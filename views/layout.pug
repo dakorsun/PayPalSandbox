@@ -1,0 +1,17 @@
+doctype
+html
+    head
+        title #{title} - My Site
+        link(rel="stylesheet", href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css", integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T", crossorigin="anonymous")
+        script(src='https://cdnjs.cloudflare.com/ajax/libs/bluebird/3.5.5/bluebird.js')
+        script(src='https://unpkg.com/axios/dist/axios.min.js')
+        script(src='https://www.paypalobjects.com/api/checkout.js')
+        script(src='https://js.braintreegateway.com/web/3.39.0/js/client.min.js')
+        script(src='https://js.braintreegateway.com/web/3.39.0/js/paypal-checkout.min.js')
+
+    body
+        section.item
+
+            block content
+
+    script(src='./js/PayPalScript.js')
