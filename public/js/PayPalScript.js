@@ -1,56 +1,30 @@
-(async function () {
+(async function (){
 
-  const {data: token} = await axios.get('/client_token');
-  console.log('token: ', token)
-  paypal.Button.render({
-    braintree,
-    client: {
-      sandbox: token
-    },
-    env: 'sandbox',
-    commit: true,
+  const {data: {plan_id}} = await axios('/plan_id/name');
 
-    payment: function (data, actions) {
-      return actions.braintree.create({
-        flow: 'checkout', // Required
-        amount: 10.00, // Required
-        currency: 'USD', // Required
-        enableShippingAddress: true,
-        shippingAddressEditable: true,
-        // shippingAddressEditable: false,
-        shippingAddressOverride: {
-          recipientName: 'Scruff McGruff',
-          line1: '1234 Main St.',
-          line2: 'Unit 1',
-          city: 'Chicago',
-          countryCode: 'US',
-          postalCode: '60652',
-          state: 'IL',
-          phone: '123.456.7890'
-        }
+  paypal.Buttons({
+    createSubscription: function(data, actions) {
+      return actions.subscription.create({
+        plan_id
       });
     },
-
-    // onAuthorize: function (payload) {
-    //   console.log(payload);
-    //   axios.post('/checkout', {nonce: payload.nonce});
+    // createOrder: function(data, action){
+    //   return action.order.create({
+    //     purchase_units: [{
+    //       amount: {
+    //         value: '10'
+    //       }
+    //     }]
+    //   })
     // },
-    onAuthorize: function (data, actions) {
-      // Get the payment details
-      return actions.payment.get()
-        .then(function (paymentDetails) {
-          // Show a confirmation using the details from paymentDetails
-          // Then listen for a click on your confirm button
-          document.querySelector('#confirm-button')
-            .addEventListener('click', function () {
-              // Execute the payment
-              return actions.payment.execute()
-                .then(function () {
-                  // Show a success page to the buyer
-                });
-            });
-        });
+    onApprove: function(data, actions) {
+      // Capture the funds from the transaction
+      console.log('subscription data: ', data);
+      // return actions.order.capture().then(function(details) {
+      //   // Show a success message to your buyer
+      //   console.log('Transaction completed by ' + details.payer.name.given_name);
+      // });
     }
-  }, '#paypal-button');
-  console.log('rendered');
+  }).render('#paypal-button')
+
 })();

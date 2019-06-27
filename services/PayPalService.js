@@ -1,62 +1,46 @@
-const braintree = require('braintree');
+const checkoutNodeJssdk = require('@paypal/checkout-server-sdk');
 const {sandboxAccessToken, braintreePublicKey, braintreePrivateKey, merchantId} = require('../config/env');
 
-const gateway = new braintree.BraintreeGateway({
-  environment: braintree.Environment.Sandbox,
-  merchantId: 'MH94T8XK7JXB8',
-  publicKey: braintreePublicKey,
-  privateKey: braintreePrivateKey
-});
+
+function client(){
+  return new checkoutNodeJssdk.core.PayPalHttpClient(environment());
+}
+
+function environment() {
+  let clientId = process.env.PAYPAL_CLIENT_ID || 'PAYPAL-SANDBOX-CLIENT-ID';
+  let clientSecret = process.env.PAYPAL_CLIENT_SECRET || 'PAYPAL-SANDBOX-CLIENT-SECRET';
+
+  return new checkoutNodeJssdk.core.SandboxEnvironment(
+    clientId, clientSecret
+  );
+}
+
+async function prettyPrint(jsonData, pre=""){
+  let pretty = "";
+  function capitalize(string) {
+    return string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
+  }
+  for (let key in jsonData){
+    if (jsonData.hasOwnProperty(key)){
+      if (isNaN(key))
+        pretty += pre + capitalize(key) + ": ";
+      else
+        pretty += pre + (parseInt(key) + 1) + ": ";
+      if (typeof jsonData[key] === "object"){
+        pretty += "\n";
+        pretty += await prettyPrint(jsonData[key], pre + "    ");
+      }
+      else {
+        pretty += jsonData[key] + "\n";
+      }
+
+    }
+  }
+  return pretty;
+}
+
 
 module.exports = {
-  getClientToken: async (req, res) => {
-    try{
-      const response = await gateway.clientToken.generate({});
+  client, prettyPrint
+}
 
-      res.send(response.clientToken);
-    }catch(err){
-      res.sendStatus(500);
-    }
-  },
-  receivePaymentMethodNonce: async (req, res) => {
-    const {nonce} = req.body;
-
-    const saleRequest = {
-      amount: req.body.amount,
-      merchantAccountId: "USD",
-      paymentMethodNonce: nonce,
-      orderId: "Mapped to PayPal Invoice Number",
-      descriptor: {
-        name: "Descriptor displayed in customer CC statements. 22 char max"
-      },
-      shipping: {
-        firstName: "Jen",
-        lastName: "Smith",
-        company: "Braintree",
-        streetAddress: "1 E 1st St",
-        extendedAddress: "5th Floor",
-        locality: "Bartlett",
-        region: "IL",
-        postalCode: "60103",
-        countryCodeAlpha2: "US"
-      },
-      options: {
-        paypal: {
-          customField: "PayPal custom field",
-          description: "Description for PayPal email receipt"
-        },
-        submitForSettlement: true
-      }
-    };
-
-    gateway.transaction.sale(saleRequest, function (err, result) {
-      if (err) {
-        res.send("<h1>Error:  " + err + "</h1>");
-      } else if (result.success) {
-        res.send("<h1>Success! Transaction ID: " + result.transaction.id + "</h1>");
-      } else {
-        res.send("<h1>Error:  " + result.message + "</h1>");
-      }
-    });
-  }
-};
